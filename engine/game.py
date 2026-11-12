@@ -5,6 +5,7 @@ def new_board():
     board = chess.Board()
     return board
 
+
 def display_board(board):
     """ Prints the board in the terminal """
     print(board)
