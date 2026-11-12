@@ -1,13 +1,9 @@
 import chess
 
-
-
 def new_board():
     """ Returns a fresh board at the starting position. """
     board = chess.Board()
     return board
-
-
 
 def display_board(board):
     """ Prints the board in the terminal """
