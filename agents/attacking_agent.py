@@ -120,6 +120,8 @@ def gives_check(board, color):
     """
     enemy = not color
     return int(board.turn == enemy and board.is_check())
+
+
 def pawn_storm(board, color):
     """Return how many ranks color's pawns have advanced, counting only pawns
     on the enemy king's file or the files next to it (a pawn storm)."""
@@ -148,30 +150,25 @@ def promotion_threat(board, color):
             total += 1
     return total
 
-def pawn_storm(board, color):
-    """Return how many ranks color's pawns have advanced, counting only pawns
-    on the enemy king's file or the files next to it (a pawn storm)."""
-    enemy_king = board.king(not color)
-    if enemy_king is None:
-        return 0
-    king_file = chess.square_file(enemy_king)
 
-    total = 0
-    for square in board.pieces(chess.PAWN, color):
-        if abs(chess.square_file(square) - king_file) <= 1:
-            total += relative_rank(square, color) - 1   # 0 on its starting square
-    return total
+def evaluate(board):
+    """Score from White's point of view: positive favours White."""
+    material_score = material(board, chess.WHITE) - material(board, chess.BLACK)
+    mobility_score = mobility(board, chess.WHITE) - mobility(board, chess.BLACK)
+    centre_score = centre_control(board, chess.WHITE) - centre_control(board, chess.BLACK)
+    zone_score = king_zone_control(board, chess.WHITE) - king_zone_control(board, chess.BLACK)
+    attacker_score = king_attackers(board, chess.WHITE) - king_attackers(board, chess.BLACK)
+    check_score = gives_check(board, chess.WHITE) - gives_check(board, chess.BLACK)
+    storm_score = pawn_storm(board, chess.WHITE) - pawn_storm(board, chess.BLACK)
+    promotion_score = promotion_threat(board, chess.WHITE) - promotion_threat(board, chess.BLACK)
 
-
-def promotion_threat(board, color):
-    """Return promotion-threat points for color's pawns:
-    2 for a pawn on the 7th rank (one step from promoting),
-    1 for a pawn on the 6th rank (two steps away)."""
-    total = 0
-    for square in board.pieces(chess.PAWN, color):
-        rel = relative_rank(square, color)
-        if rel == 6:
-            total += 2
-        elif rel == 5:
-            total += 1
-    return total
+    return (
+        material_score
+        + MOBILITY_WEIGHT * mobility_score
+        + CENTRE_WEIGHT * centre_score
+        + KING_ZONE_WEIGHT * zone_score
+        + KING_ATTACKER_WEIGHT * attacker_score
+        + CHECK_WEIGHT * check_score
+        + PAWN_STORM_WEIGHT * storm_score
+        + PROMOTION_WEIGHT * promotion_score
+    )
