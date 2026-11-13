@@ -18,6 +18,8 @@ PIECE_VALUES = {
 # --- Feature weights (tune these later) ---
 MOBILITY_WEIGHT = 10
 CENTRE_WEIGHT = 15
+KING_ZONE_WEIGHT = 20       # per square attacked in the enemy king's zone
+KING_ATTACKER_WEIGHT = 10   # per piece aiming at the enemy king's zone
 
 # --- Feature settings ---
 # Pieces whose mobility we count (pawns and king excluded on purpose)
@@ -64,14 +66,52 @@ def centre_control(board, color):
     return total
 
 
+def king_zone(board, color):
+    """Return a SquareSet of color's king square plus every square next to it.
+    Returns an empty SquareSet if color has no king (test positions)."""
+    king_square = board.king(color)
+    if king_square is None:
+        return chess.SquareSet()
+    zone = board.attacks(king_square)   # the squares around the king
+    zone.add(king_square)               # plus the king's own square
+    return zone
+
+
+def king_zone_control(board, color):
+    """Return how many squares in the ENEMY king's zone are attacked by color."""
+    enemy = not color
+    count = 0
+    for square in king_zone(board, enemy):
+        if board.is_attacked_by(color, square):
+            count += 1
+    return count
+
+
+def king_attackers(board, color):
+    """Return how many DIFFERENT pieces of color attack at least one square
+    in the enemy king's zone. A piece hitting several zone squares counts once."""
+    enemy = not color
+    attackers = chess.SquareSet()
+    for square in king_zone(board, enemy):
+        attackers |= board.attackers(color, square)   # union: no duplicates
+    own_king = board.king(color)
+    if own_king is not None:
+        attackers.discard(own_king)   # our king next to theirs isn't an attack
+    return len(attackers)
+
+
 def evaluate(board):
     """Score from White's point of view: positive favours White."""
     material_score = material(board, chess.WHITE) - material(board, chess.BLACK)
     mobility_score = mobility(board, chess.WHITE) - mobility(board, chess.BLACK)
     centre_score = centre_control(board, chess.WHITE) - centre_control(board, chess.BLACK)
+    zone_score = king_zone_control(board, chess.WHITE) - king_zone_control(board, chess.BLACK)
+    attacker_score = king_attackers(board, chess.WHITE) - king_attackers(board, chess.BLACK)
 
     return (
         material_score
         + MOBILITY_WEIGHT * mobility_score
         + CENTRE_WEIGHT * centre_score
+        + KING_ZONE_WEIGHT * zone_score
+        + KING_ATTACKER_WEIGHT * attacker_score
     )
