@@ -21,6 +21,11 @@ SELECTED = (246, 246, 105)       # yellow tint for the picked-up piece
 TARGET = (100, 110, 64)          # dots on legal destination squares
 STATUS_BG = (40, 40, 40)         # dark grey status strip
 STATUS_TEXT = (255, 255, 255)
+MENU_BG = (30, 30, 30)           # start-menu background
+BUTTON = (70, 110, 160)
+BUTTON_HOVER = (95, 140, 195)
+BUTTON_DISABLED = (80, 80, 80)
+HINT_TEXT = (170, 170, 170)
 
 # Fonts that contain the Unicode chess symbols (macOS first, then Windows).
 PIECE_FONTS = "applesymbols,segoeuisymbol"
@@ -34,6 +39,7 @@ class BoardView:
         self.screen = screen
         self.font = pygame.font.SysFont(PIECE_FONTS, SQUARE_SIZE - 10)
         self.text_font = pygame.font.SysFont(None, 28)   # default font for messages
+        self.title_font = pygame.font.SysFont(None, 52)  # menu title
 
     def square_to_pixel(self, square):
         """Return the (x, y) pixel of a square's top-left corner.
@@ -111,3 +117,31 @@ class BoardView:
         image = self.text_font.render(message, True, STATUS_TEXT)
         centre = (BOARD_SIZE // 2, BOARD_SIZE + STATUS_HEIGHT // 2)
         self.screen.blit(image, image.get_rect(center=centre))
+
+    def draw_text(self, text, font, colour, centre):
+        """Draw `text` centred on the pixel `centre`."""
+        image = font.render(text, True, colour)
+        self.screen.blit(image, image.get_rect(center=centre))
+
+    def draw_menu(self, title, buttons, hint, mouse_pos):
+        """Draw the start menu.
+
+        buttons   -- list of dicts with "label", "rect" (pygame.Rect) and "enabled"
+        hint      -- small help text shown at the bottom
+        mouse_pos -- current mouse position, used to highlight the hovered button
+        """
+        self.screen.fill(MENU_BG)
+        width, height = self.screen.get_size()
+        self.draw_text(title, self.title_font, STATUS_TEXT, (width // 2, 90))
+
+        for button in buttons:
+            if not button["enabled"]:
+                colour = BUTTON_DISABLED
+            elif button["rect"].collidepoint(mouse_pos):
+                colour = BUTTON_HOVER
+            else:
+                colour = BUTTON
+            pygame.draw.rect(self.screen, colour, button["rect"], border_radius=8)
+            self.draw_text(button["label"], self.text_font, STATUS_TEXT, button["rect"].center)
+
+        self.draw_text(hint, self.text_font, HINT_TEXT, (width // 2, height - 40))
