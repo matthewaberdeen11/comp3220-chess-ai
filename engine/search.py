@@ -62,23 +62,68 @@ def minimax(board, depth, evaluate, maximizing):
 
 
 def best_move(board, depth, evaluate):
-    """Return the best move for the side to move, searching `depth` half-moves.
+    """Return the best move for the side to move, searching `depth` half-moves
+    with alpha-beta pruning.
 
-    This is what agents call. It runs the top level of minimax itself so it
-    can remember WHICH move produced the best score.
+    This is what agents call. It runs the top level of the search itself so it
+    can remember WHICH move produced the best score, and it tightens the
+    alpha/beta window after each root move so later moves get pruned too.
     """
     maximizing = board.turn == chess.WHITE
     best_score = -math.inf if maximizing else math.inf
     chosen = None
+    alpha, beta = -math.inf, math.inf
 
     for move in board.legal_moves:
         board.push(move)
-        score = minimax(board, depth - 1, evaluate, not maximizing)
+        score = alphabeta(board, depth - 1, evaluate, alpha, beta, not maximizing)
         board.pop()
 
-        if maximizing and score > best_score:
-            best_score, chosen = score, move
-        elif not maximizing and score < best_score:
-            best_score, chosen = score, move
+        if maximizing:
+            if score > best_score:
+                best_score, chosen = score, move
+            alpha = max(alpha, best_score)
+        else:
+            if score < best_score:
+                best_score, chosen = score, move
+            beta = min(beta, best_score)
 
     return chosen
+
+def alphabeta(board, depth, evaluate, alpha, beta, maximizing):
+    """Minimax with alpha-beta pruning. Returns the same score as minimax,
+    but skips branches that cannot change the final decision.
+
+    alpha -- the best score White (maximiser) is already guaranteed elsewhere
+    beta  -- the best score Black (minimiser) is already guaranteed elsewhere
+
+    If beta <= alpha, the opponent would never allow this position to be
+    reached (they already have a better option), so we stop searching it.
+    """
+    if board.is_game_over():
+        return terminal_score(board, depth)
+    if depth == 0:
+        return evaluate(board)
+
+    if maximizing:
+        best = -math.inf
+        for move in board.legal_moves:
+            board.push(move)
+            score = alphabeta(board, depth - 1, evaluate, alpha, beta, False)
+            board.pop()
+            best = max(best, score)
+            alpha = max(alpha, best)        # White's guarantee improves
+            if beta <= alpha:
+                break                       # Black won't allow this line: prune
+        return best
+    else:
+        best = math.inf
+        for move in board.legal_moves:
+            board.push(move)
+            score = alphabeta(board, depth - 1, evaluate, alpha, beta, True)
+            board.pop()
+            best = min(best, score)
+            beta = min(beta, best)          # Black's guarantee improves
+            if beta <= alpha:
+                break                       # White won't allow this line: prune
+        return best
