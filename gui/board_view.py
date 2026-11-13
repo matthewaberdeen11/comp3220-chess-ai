@@ -9,6 +9,8 @@ import chess
 # --- Sizes ---
 SQUARE_SIZE = 80                 # pixels per square
 BOARD_SIZE = 8 * SQUARE_SIZE     # 640 x 640
+STATUS_HEIGHT = 40               # pixels for the status strip under the board
+WINDOW_SIZE = (BOARD_SIZE, BOARD_SIZE + STATUS_HEIGHT)
 
 # --- Colours (RGB) ---
 LIGHT = (240, 217, 181)          # light squares
@@ -17,6 +19,8 @@ WHITE_PIECE = (255, 255, 255)
 BLACK_PIECE = (0, 0, 0)
 SELECTED = (246, 246, 105)       # yellow tint for the picked-up piece
 TARGET = (100, 110, 64)          # dots on legal destination squares
+STATUS_BG = (40, 40, 40)         # dark grey status strip
+STATUS_TEXT = (255, 255, 255)
 
 # Fonts that contain the Unicode chess symbols (macOS first, then Windows).
 PIECE_FONTS = "applesymbols,segoeuisymbol"
@@ -29,6 +33,7 @@ class BoardView:
         """screen -- the pygame surface to draw on."""
         self.screen = screen
         self.font = pygame.font.SysFont(PIECE_FONTS, SQUARE_SIZE - 10)
+        self.text_font = pygame.font.SysFont(None, 28)   # default font for messages
 
     def square_to_pixel(self, square):
         """Return the (x, y) pixel of a square's top-left corner.
@@ -99,3 +104,10 @@ class BoardView:
         self.draw_board()
         self.draw_highlights(selected, targets)
         self.draw_pieces(board)
+
+    def draw_status(self, message):
+        """Draw the status strip under the board with `message` centred in it."""
+        pygame.draw.rect(self.screen, STATUS_BG, (0, BOARD_SIZE, BOARD_SIZE, STATUS_HEIGHT))
+        image = self.text_font.render(message, True, STATUS_TEXT)
+        centre = (BOARD_SIZE // 2, BOARD_SIZE + STATUS_HEIGHT // 2)
+        self.screen.blit(image, image.get_rect(center=centre))
