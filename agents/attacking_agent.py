@@ -15,7 +15,7 @@ PIECE_VALUES = {
     chess.KING: 0,
 }
 
-
+# --- Feature weights (tune these later) ---
 MOBILITY_WEIGHT = 10
 CENTRE_WEIGHT = 15
 KING_ZONE_WEIGHT = 20       # per square attacked in the enemy king's zone
@@ -23,13 +23,55 @@ KING_ATTACKER_WEIGHT = 10   # per piece aiming at the enemy king's zone
 CHECK_WEIGHT = 30           # bonus when we have the enemy king in check
 PAWN_STORM_WEIGHT = 5       # per rank a pawn has advanced near the enemy king
 PROMOTION_WEIGHT = 40       # per promotion-threat point
+ACTIVITY_WEIGHT = 1         # table values are already in centipawns
 
-
+# --- Feature settings ---
 # Pieces whose mobility we count (pawns and king excluded on purpose)
 MOBILITY_PIECES = [chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]
 
 # The four central squares
 CENTRE_SQUARES = [chess.D4, chess.E4, chess.D5, chess.E5]
+
+# --- Piece-square tables (White's view, rank 8 at the top, a-file on the left) ---
+# Attacking flavour: biggest bonuses in the ENEMY half, penalties at home.
+KNIGHT_TABLE = [
+    -20, -10, -10, -10, -10, -10, -10, -20,
+    -10,   5,  10,  15,  15,  10,   5, -10,
+    -10,  10,  20,  25,  25,  20,  10, -10,
+    -10,   5,  15,  25,  25,  15,   5, -10,
+    -10,   0,  10,  15,  15,  10,   0, -10,
+    -15,   0,   5,   5,   5,   5,   0, -15,
+    -20, -10,   0,   0,   0,   0, -10, -20,
+    -30, -20, -15, -15, -15, -15, -20, -30,
+]
+
+BISHOP_TABLE = [
+    -10,  -5,  -5,  -5,  -5,  -5,  -5, -10,
+     -5,  10,  10,  10,  10,  10,  10,  -5,
+     -5,  10,  15,  15,  15,  15,  10,  -5,
+     -5,   5,  15,  20,  20,  15,   5,  -5,
+     -5,   5,  10,  15,  15,  10,   5,  -5,
+     -5,   5,   5,  10,  10,   5,   5,  -5,
+     -5,  10,   0,   0,   0,   0,  10,  -5,
+    -15, -10, -10, -10, -10, -10, -10, -15,
+]
+
+ROOK_TABLE = [
+      0,   0,   0,   5,   5,   0,   0,   0,
+     20,  20,  20,  20,  20,  20,  20,  20,   # 7th rank: rook attacks pawns + traps king
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   5,   5,   0,   0,   0,
+]
+
+ACTIVITY_TABLES = {
+    chess.KNIGHT: KNIGHT_TABLE,
+    chess.BISHOP: BISHOP_TABLE,
+    chess.ROOK: ROOK_TABLE,
+}
 
 
 def material(board, color):
@@ -79,6 +121,7 @@ def king_zone(board, color):
     zone.add(king_square)               # plus the king's own square
     return zone
 
+
 def relative_rank(square, color):
     """Return how far up the board a square is from color's own side (0-7).
 
@@ -89,6 +132,7 @@ def relative_rank(square, color):
     if color == chess.WHITE:
         return rank
     return 7 - rank
+
 
 def king_zone_control(board, color):
     """Return how many squares in the ENEMY king's zone are attacked by color."""
@@ -111,6 +155,7 @@ def king_attackers(board, color):
     if own_king is not None:
         attackers.discard(own_king)   # our king next to theirs isn't an attack
     return len(attackers)
+
 
 def gives_check(board, color):
     """Return 1 if color currently has the enemy king in check, else 0.
@@ -151,6 +196,24 @@ def promotion_threat(board, color):
     return total
 
 
+def piece_activity(board, color):
+    """Return the piece-square-table bonus for color's knights, bishops and rooks.
+
+    Tables are written from White's view with rank 8 at the top. For a White
+    piece we mirror the square (flip its rank) to match that layout; a Black
+    piece's square already lines up, because Black sees the board upside down.
+    """
+    total = 0
+    for piece_type, table in ACTIVITY_TABLES.items():
+        for square in board.pieces(piece_type, color):
+            if color == chess.WHITE:
+                index = chess.square_mirror(square)
+            else:
+                index = square
+            total += table[index]
+    return total
+
+
 def evaluate(board):
     """Score from White's point of view: positive favours White."""
     material_score = material(board, chess.WHITE) - material(board, chess.BLACK)
@@ -161,6 +224,7 @@ def evaluate(board):
     check_score = gives_check(board, chess.WHITE) - gives_check(board, chess.BLACK)
     storm_score = pawn_storm(board, chess.WHITE) - pawn_storm(board, chess.BLACK)
     promotion_score = promotion_threat(board, chess.WHITE) - promotion_threat(board, chess.BLACK)
+    activity_score = piece_activity(board, chess.WHITE) - piece_activity(board, chess.BLACK)
 
     return (
         material_score
@@ -171,4 +235,5 @@ def evaluate(board):
         + CHECK_WEIGHT * check_score
         + PAWN_STORM_WEIGHT * storm_score
         + PROMOTION_WEIGHT * promotion_score
+        + ACTIVITY_WEIGHT * activity_score
     )
