@@ -6,7 +6,7 @@ handle events -> draw everything -> show it -> repeat.
 import pygame
 import chess
 
-from gui.board_view import BoardView, BOARD_SIZE
+from gui.board_view import BoardView, WINDOW_SIZE
 
 FPS = 30   # frames per second
 
@@ -51,10 +51,28 @@ def legal_targets(board, selected):
     return [m.to_square for m in board.legal_moves if m.from_square == selected]
 
 
+def status_message(board):
+    """Return the status-bar text: checkmate, draw, check, or whose turn it is.
+
+    Checkmate is tested first because a checkmate is also a check.
+    """
+    side = "White" if board.turn == chess.WHITE else "Black"
+
+    if board.is_checkmate():
+        winner = "Black" if board.turn == chess.WHITE else "White"   # side to move lost
+        return f"Checkmate — {winner} wins"
+    if board.is_game_over():
+        reason = board.outcome().termination.name.replace("_", " ").lower()
+        return f"Draw — {reason}"
+    if board.is_check():
+        return f"{side} to move — Check!"
+    return f"{side} to move"
+
+
 def main():
     """Open the window and run the GUI until the user closes it."""
     pygame.init()
-    screen = pygame.display.set_mode((BOARD_SIZE, BOARD_SIZE))
+    screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption("COMP3220 Chess AI")
     clock = pygame.time.Clock()
 
@@ -68,14 +86,18 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN and not board.is_game_over():
                 square = view.pixel_to_square(*event.pos)
-                if square is not None:
+                if square is not None:   # None = click on the status bar
                     selected = handle_click(board, selected, square)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                board = chess.Board()    # R = restart
+                selected = None
 
         # 2. Draw everything for this frame
         targets = legal_targets(board, selected)
         view.draw(board, selected, targets)
+        view.draw_status(status_message(board))
 
         # 3. Show the frame and wait so we run at FPS
         pygame.display.flip()
