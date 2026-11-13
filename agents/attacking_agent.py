@@ -15,14 +15,16 @@ PIECE_VALUES = {
     chess.KING: 0,
 }
 
-# --- Feature weights (tune these later) ---
+
 MOBILITY_WEIGHT = 10
 CENTRE_WEIGHT = 15
 KING_ZONE_WEIGHT = 20       # per square attacked in the enemy king's zone
 KING_ATTACKER_WEIGHT = 10   # per piece aiming at the enemy king's zone
 CHECK_WEIGHT = 30           # bonus when we have the enemy king in check
+PAWN_STORM_WEIGHT = 5       # per rank a pawn has advanced near the enemy king
+PROMOTION_WEIGHT = 40       # per promotion-threat point
 
-# --- Feature settings ---
+
 # Pieces whose mobility we count (pawns and king excluded on purpose)
 MOBILITY_PIECES = [chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]
 
@@ -77,6 +79,16 @@ def king_zone(board, color):
     zone.add(king_square)               # plus the king's own square
     return zone
 
+def relative_rank(square, color):
+    """Return how far up the board a square is from color's own side (0-7).
+
+    White counts from rank 1 upward; Black counts from rank 8 downward, so
+    both colours' pawns start on relative rank 1 and promote on relative rank 7.
+    """
+    rank = chess.square_rank(square)
+    if color == chess.WHITE:
+        return rank
+    return 7 - rank
 
 def king_zone_control(board, color):
     """Return how many squares in the ENEMY king's zone are attacked by color."""
@@ -108,21 +120,58 @@ def gives_check(board, color):
     """
     enemy = not color
     return int(board.turn == enemy and board.is_check())
+def pawn_storm(board, color):
+    """Return how many ranks color's pawns have advanced, counting only pawns
+    on the enemy king's file or the files next to it (a pawn storm)."""
+    enemy_king = board.king(not color)
+    if enemy_king is None:
+        return 0
+    king_file = chess.square_file(enemy_king)
 
-def evaluate(board):
-    """Score from White's point of view: positive favours White."""
-    material_score = material(board, chess.WHITE) - material(board, chess.BLACK)
-    mobility_score = mobility(board, chess.WHITE) - mobility(board, chess.BLACK)
-    centre_score = centre_control(board, chess.WHITE) - centre_control(board, chess.BLACK)
-    zone_score = king_zone_control(board, chess.WHITE) - king_zone_control(board, chess.BLACK)
-    attacker_score = king_attackers(board, chess.WHITE) - king_attackers(board, chess.BLACK)
-    check_score = gives_check(board, chess.WHITE) - gives_check(board, chess.BLACK)
+    total = 0
+    for square in board.pieces(chess.PAWN, color):
+        if abs(chess.square_file(square) - king_file) <= 1:
+            total += relative_rank(square, color) - 1   # 0 on its starting square
+    return total
 
-    return (
-        material_score
-        + MOBILITY_WEIGHT * mobility_score
-        + CENTRE_WEIGHT * centre_score
-        + KING_ZONE_WEIGHT * zone_score
-        + KING_ATTACKER_WEIGHT * attacker_score
-        + CHECK_WEIGHT * check_score
-    )
+
+def promotion_threat(board, color):
+    """Return promotion-threat points for color's pawns:
+    2 for a pawn on the 7th rank (one step from promoting),
+    1 for a pawn on the 6th rank (two steps away)."""
+    total = 0
+    for square in board.pieces(chess.PAWN, color):
+        rel = relative_rank(square, color)
+        if rel == 6:
+            total += 2
+        elif rel == 5:
+            total += 1
+    return total
+
+def pawn_storm(board, color):
+    """Return how many ranks color's pawns have advanced, counting only pawns
+    on the enemy king's file or the files next to it (a pawn storm)."""
+    enemy_king = board.king(not color)
+    if enemy_king is None:
+        return 0
+    king_file = chess.square_file(enemy_king)
+
+    total = 0
+    for square in board.pieces(chess.PAWN, color):
+        if abs(chess.square_file(square) - king_file) <= 1:
+            total += relative_rank(square, color) - 1   # 0 on its starting square
+    return total
+
+
+def promotion_threat(board, color):
+    """Return promotion-threat points for color's pawns:
+    2 for a pawn on the 7th rank (one step from promoting),
+    1 for a pawn on the 6th rank (two steps away)."""
+    total = 0
+    for square in board.pieces(chess.PAWN, color):
+        rel = relative_rank(square, color)
+        if rel == 6:
+            total += 2
+        elif rel == 5:
+            total += 1
+    return total
