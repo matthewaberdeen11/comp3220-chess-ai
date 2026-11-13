@@ -15,6 +15,8 @@ LIGHT = (240, 217, 181)          # light squares
 DARK = (181, 136, 99)            # dark squares
 WHITE_PIECE = (255, 255, 255)
 BLACK_PIECE = (0, 0, 0)
+SELECTED = (246, 246, 105)       # yellow tint for the picked-up piece
+TARGET = (100, 110, 64)          # dots on legal destination squares
 
 # Fonts that contain the Unicode chess symbols (macOS first, then Windows).
 PIECE_FONTS = "applesymbols,segoeuisymbol"
@@ -39,6 +41,25 @@ class BoardView:
         x = file * SQUARE_SIZE
         y = (7 - rank) * SQUARE_SIZE
         return x, y
+
+    def pixel_to_square(self, x, y):
+        """Return the chess square under pixel (x, y), or None if the click
+        is outside the board. The reverse of square_to_pixel."""
+        file = x // SQUARE_SIZE
+        rank = 7 - (y // SQUARE_SIZE)
+        if not (0 <= file <= 7 and 0 <= rank <= 7):
+            return None
+        return chess.square(file, rank)
+
+    def draw_highlights(self, selected, targets):
+        """Tint the selected square and put a dot on each legal target square."""
+        if selected is not None:
+            x, y = self.square_to_pixel(selected)
+            pygame.draw.rect(self.screen, SELECTED, (x, y, SQUARE_SIZE, SQUARE_SIZE))
+        for square in targets:
+            x, y = self.square_to_pixel(square)
+            centre = (x + SQUARE_SIZE // 2, y + SQUARE_SIZE // 2)
+            pygame.draw.circle(self.screen, TARGET, centre, SQUARE_SIZE // 6)
 
     def draw_board(self):
         """Draw the 64 light and dark squares (a1 is dark)."""
@@ -73,7 +94,8 @@ class BoardView:
                 outline = self.font.render(piece.unicode_symbol(), True, BLACK_PIECE)
                 self.screen.blit(outline, outline.get_rect(center=centre))
 
-    def draw(self, board):
-        """Draw the whole board: squares first, then pieces on top."""
+    def draw(self, board, selected=None, targets=()):
+        """Draw the whole board: squares, then highlights, then pieces on top."""
         self.draw_board()
+        self.draw_highlights(selected, targets)
         self.draw_pieces(board)
