@@ -4,6 +4,7 @@ Strategy: prioritise initiative, active pieces and pressure on the enemy king.
 All scores are from White's point of view: positive favours White.
 """
 import chess
+from engine.search import best_move
 
 # --- Piece values (centipawns: 1 pawn = 100) ---
 PIECE_VALUES = {
@@ -237,3 +238,48 @@ def evaluate(board):
         + PROMOTION_WEIGHT * promotion_score
         + ACTIVITY_WEIGHT * activity_score
     )
+
+class AttackingAgent:
+    """Attacking chess agent.
+
+    Strategy: prioritises initiative and pressure on the enemy king. Its
+    evaluation rewards attacks on the squares around the enemy king, the number
+    of pieces joining that attack, checks, mobility, centre control, pawns
+    storming toward the enemy king, promotion threats and pieces placed
+    actively in the enemy half. It accepts a looser pawn structure and king
+    position in exchange for attacking chances.
+
+    Moves are chosen with minimax + alpha-beta pruning (engine.search) to a
+    configurable depth.
+    """
+
+    name = "Attacking"
+
+    def __init__(self, depth=2):
+        """Create the agent. depth = how many half-moves to search ahead."""
+        self.depth = depth
+
+    def choose_move(self, board):
+        """Return the best move for the side to move. Does not modify the board."""
+        return best_move(board, self.depth, evaluate)
+
+
+if __name__ == "__main__":
+    # Quick test: Attacking agent (White) vs Random agent (Black).
+    from agents.random_agent import RandomAgent
+    from engine.game import display_board
+
+    white = AttackingAgent(depth=2)
+    black = RandomAgent()
+    board = chess.Board()
+
+    while not board.is_game_over():
+        agent = white if board.turn == chess.WHITE else black
+        move = agent.choose_move(board)
+        print(agent.name, move)
+        board.push(move)
+
+    display_board(board)
+    print("Result:", board.result())
+    print("Reason:", board.outcome().termination)
+    print("Moves played:", len(board.move_stack))
