@@ -20,6 +20,7 @@ MOBILITY_WEIGHT = 10
 CENTRE_WEIGHT = 15
 KING_ZONE_WEIGHT = 20       # per square attacked in the enemy king's zone
 KING_ATTACKER_WEIGHT = 10   # per piece aiming at the enemy king's zone
+CHECK_WEIGHT = 30           # bonus when we have the enemy king in check
 
 # --- Feature settings ---
 # Pieces whose mobility we count (pawns and king excluded on purpose)
@@ -99,6 +100,14 @@ def king_attackers(board, color):
         attackers.discard(own_king)   # our king next to theirs isn't an attack
     return len(attackers)
 
+def gives_check(board, color):
+    """Return 1 if color currently has the enemy king in check, else 0.
+
+    Only the side to move can be in check, so the enemy is in check when it
+    is the enemy's turn and board.is_check() is True.
+    """
+    enemy = not color
+    return int(board.turn == enemy and board.is_check())
 
 def evaluate(board):
     """Score from White's point of view: positive favours White."""
@@ -107,6 +116,7 @@ def evaluate(board):
     centre_score = centre_control(board, chess.WHITE) - centre_control(board, chess.BLACK)
     zone_score = king_zone_control(board, chess.WHITE) - king_zone_control(board, chess.BLACK)
     attacker_score = king_attackers(board, chess.WHITE) - king_attackers(board, chess.BLACK)
+    check_score = gives_check(board, chess.WHITE) - gives_check(board, chess.BLACK)
 
     return (
         material_score
@@ -114,4 +124,5 @@ def evaluate(board):
         + CENTRE_WEIGHT * centre_score
         + KING_ZONE_WEIGHT * zone_score
         + KING_ATTACKER_WEIGHT * attacker_score
+        + CHECK_WEIGHT * check_score
     )
