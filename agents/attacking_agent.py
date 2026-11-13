@@ -18,12 +18,34 @@ def material(board, color):
         
     return total_value
 
+  
+MOBILITY_WEIGHT = 10
+
+# Pieces whose mobility we count (pawns and king excluded on purpose)
+MOBILITY_PIECES = [chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]
+
+
+def mobility(board, color):
+    """Return how many squares the given color's knights, bishops, rooks and
+    queens attack, excluding squares occupied by that color's own pieces.
+
+    Pawns are skipped (they attack diagonally but move forward) and the king is
+    skipped (we don't want to reward it for wandering out early).
+    """
+    own_pieces = board.occupied_co[color]
+    total = 0
+    for piece_type in MOBILITY_PIECES:
+        for square in board.pieces(piece_type, color):
+            reachable = board.attacks(square) & ~own_pieces
+            total += len(reachable)
+    return total
+
 def evaluate(board):
     """Score from White’s point of view: positive favours White."""
-    return (material(board, chess.WHITE) - material(board, chess.BLACK))
-  
+    material_score = material(board, chess.WHITE) - material(board, chess.BLACK)
+    mobility_score = mobility(board, chess.WHITE) - mobility(board, chess.BLACK)
 
-                    
+    return material_score + MOBILITY_WEIGHT * mobility_score 
     
         
         
