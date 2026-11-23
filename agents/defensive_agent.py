@@ -1,3 +1,9 @@
+""" Defensive Agent Evaluation
+
+Strategy: Prioritzes survival, king protection, material preservation, 
+and reducing the opponent's opportunities
+"""
+
 import chess
 from engine.search import best_move
 
@@ -24,6 +30,8 @@ KING_SHIELD_FILES = (-1, 0, 1)
 
 
 def king_safety_score(board, color):
+    """ Evaluate castling status, pawn shield, and king exposure."""
+
     king_sq = board.king(color)
     if king_sq is None:
         return -10
@@ -62,45 +70,46 @@ def king_safety_score(board, color):
     return score
 
 def protected_pieces_score(board, color):
-
+    """Reward friendly non-pawn pieces that are defended by friendly pieces."""
     score = 0
 
     for sq, piece in board.piece_map().items():
         if piece.color == color and piece.piece_type not in (chess.PAWN, chess.KING):
             defenders =  len(board.attackers(color, sq))
             if defenders > 0:
-                score += 0.5 + 0.25 * min(defenders - 1, 2)
+                score += 1 * min(defenders - 1, 2)
     
     return score
 
 def pawn_structure_score(board, color):
+    """Reward solid pawn chains and penalize double or isolated pawns."""
     pawn_squares = [sq 
                    for sq, piece in board.piece_map().items()
                    if piece.color == color and piece.piece_type == chess.PAWN
                    ]
     if not pawn_squares:
-        return 0.0
+        return 0
 
     files =  [chess.square_file(sq) for sq in pawn_squares]
-    score = 0.0
+    score = 0
 
     for f in range(8):
         count_in_file = files.count(f)
         if count_in_file > 1:
-            score -= 0.8 *(count_in_file - 1)
+            score -= 1 *(count_in_file - 1)
 
         if count_in_file > 0:
             has_neighbour = (f > 0 and files.count(f -1) > 0) or (f < 0 and files.count(f +1) > 0)
             if not has_neighbour:
-                score -= 0.7 * count_in_file
+                score -= 1 * count_in_file
 
-    score += (0.25 for sq in pawn_squares if board.attackers(color, sq))
+    score += (1 for sq in pawn_squares if board.attackers(color, sq))
     return score
 
 def expose_piece_penalty(board, color):
-
+    """Penalize hanging pieces under enemy attack."""
     enemy = not color
-    penalty = 0.0
+    penalty = 0
 
     for sq, piece in board.piece_map().items():
         if piece.color == color and piece.piece_type != chess.KING:
@@ -109,21 +118,21 @@ def expose_piece_penalty(board, color):
                 continue
 
             defenders = list(board.attackers(color, sq))
-            piece_val =  PIECE_VALUES[piece.piece_type]/100.0
-            min_attacker_val = min(PIECE_VALUES[board.piece_at(a).piece_type]/100.0
+            piece_val =  PIECE_VALUES[piece.piece_type]/100
+            min_attacker_val = min(PIECE_VALUES[board.piece_at(a).piece_type]/100
                             for a in attackers if board.piece_at(a))
 
             if not defenders:
-                penalty += piece_val * 1.5
+                penalty += piece_val * 2
             elif min_attacker_val < piece_val:
-                penalty += (piece_val - min_attacker_val) * 1.2
+                penalty += (piece_val - min_attacker_val) * 1
             elif len(attackers) > len(defenders):
-                penalty += piece_val * 0.75
+                penalty += piece_val * 1
 
     return penalty
 
 def opponent_mobility_penalty(board, color):
-
+    """Penalize high opponent pseudo-legal/ legal move count(restricting options)"""
     enemy = not color
     if board.turn == enemy:
         opp_moves = board.legal_moves.count()
@@ -132,10 +141,10 @@ def opponent_mobility_penalty(board, color):
         copy_board.turn = enemy
         opp_moves = sum(1 for k in copy_board.generate_legal_moves())
 
-    return opp_moves * 0.08
+    return opp_moves * 1
 
 def enemy_king_pressure_penalty(board, color):
-
+    """Measure enemy attackers near king and checks against us."""
     king_sq = board.king(color)
     if king_sq is None:
         return 10
@@ -155,30 +164,30 @@ def enemy_king_pressure_penalty(board, color):
                 adj_sq = chess.square(f,r)
                 attackers = board.attackers(enemy, adj_sq)
                 if attackers:
-                    penalty += 0.6 * len(attackers)
+                    penalty += 1 * len(attackers)
 
             if board.is_check() and board.turn == color:
-                penalty += 2.5
+                penalty += 3
 
 
             return penalty
 
 def enemy_promotion_threat_penalty(board, color):
-
-    penalty = 0.0
+    """Penalize advanced enemy pawns close to promotion."""
+    penalty = 0
     enemy = not color
     for sq, piece in board.piece_map().items():
         if piece.color == enemy and piece.piece_type == chess.PAWN:
             rank = chess.square_rank(sq)
             advancement = (7-rank) if enemy == chess.WHITE else rank
             if advancement >= 5:
-                penalty += (advancement-4) *1.5
+                penalty += (advancement-4) * 2
 
     return penalty
 
 
 def material_diff(board, color):
-
+    """Returns the material value left(in centipawns) of pieces of a given color"""
     enemy = not color
     own_material = sum(
         PIECE_VALUES[p.piece_type]
@@ -193,10 +202,11 @@ def material_diff(board, color):
 
     return own_material - opp_material
 
-def trade_when_ahead_bonus(board, color,mat_diff):
+def trade_when_ahead_bonus(board, mat_diff):
+    """Reward simplifying/trading pieces when ahead in material"""
 
     if mat_diff <= 150:
-        return 0.0
+        return 0
 
     total_non_king = sum(
         PIECE_VALUES[p.piece_type]
@@ -205,13 +215,13 @@ def trade_when_ahead_bonus(board, color,mat_diff):
     )
 
 
-    max_starting_non_king =  2*(8*100+2*320 + 2 * 330 + 2 * 500 + 900)
+    max_starting_non_king =  2*(8 * 100 + 2 * 320 + 2 * 330 + 2 * 500 + 900)
     exchanged_ratio = max(0.0, (max_starting_non_king) - total_non_king)
-    return exchanged_ratio * min(mat_diff * 0.25, 150.0)
+    return exchanged_ratio * min(mat_diff * 1, 150.0)
 
 
 def evaluate(board, color):
-
+    """Calculates defensive evaluation for color's perspective"""
     mat_diff = material_diff(board, color)
     trading_bonus = trade_when_ahead_bonus(board, color)
     king_safety = king_safety_score(board, color)
@@ -225,19 +235,30 @@ def evaluate(board, color):
     score = (
         mat_diff
         + trading_bonus
-        + 25.0 * king_safety
-        + 15.0 * protected_pieces
-        + 15.0 * pawn_structure
-        - 25.0 * expose_piece_penalty
-        - 15.0 * opponent_mobility
-        - 20.0 * enemy_king_pressure
-        - 20.0 * promotion_threat_penalty 
+        + 25 * king_safety
+        + 15 * protected_pieces
+        + 15 * pawn_structure
+        - 25 * expose_piece_penalty
+        - 15 * opponent_mobility
+        - 20 * enemy_king_pressure
+        - 20 * promotion_threat_penalty 
     )
 
     return score
 
 
 class DefensiveAgent:
+    """Defensive Chess Agent
+    
+    Strategy: Prioritizes survival, king protection, material preservation,
+    and reducing the opponent's opportunities. The evaluation rewards material advantage,
+    king safety, castling, pawn protection around the king, protected pieces, solid pawn structure,
+    reduced opponent mobility, blocking checks and threats, avoiding hanging pieces, trading pieces when 
+    ahead and preventing enemy promotion. It should penalize exposed kings, undefended pieces, doubled
+    or isolated pawns, and enemy attackers near the king.
+
+    Moves are chosen using the minimax + alpha-beta pruning(engin.search) to a configurable depth.
+    """
 
     name = "Defending"
 
