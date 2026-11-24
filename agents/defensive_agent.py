@@ -1,6 +1,6 @@
 """ Defensive Agent Evaluation
 
-Strategy: Prioritzes survival, king protection, material preservation, 
+Strategy: Prioritizes survival, king protection, material preservation, 
 and reducing the opponent's opportunities
 """
 
@@ -24,6 +24,7 @@ PAWN_STRUCTURE = 15
 EXPOSED_PIECE_PENALTY = 25
 OPPONENT_MOBILITY = 15
 ENEMY_KING_PRESSURE = 20
+PROMOTION_THREAT = 20
 
 KING_SHIELD_FILES = (-1, 0, 1)
 
@@ -236,13 +237,13 @@ def side_score(board, color):
     score = (
         mat_diff
         + trading_bonus
-        + 25 * king_safety
-        + 15 * protected_pieces
-        + 15 * pawn_structure
-        - 25 * exposed_pieces
-        - 15 * opponent_mobility
-        - 20 * enemy_king_pressure
-        - 20 * promotion_threat_penalty 
+        + KING_SAFETY * king_safety
+        + PROTECTED_PIECES * protected_pieces
+        + PAWN_STRUCTURE * pawn_structure
+        - EXPOSED_PIECE_PENALTY * exposed_pieces
+        - OPPONENT_MOBILITY * opponent_mobility
+        - ENEMY_KING_PRESSURE * enemy_king_pressure
+        - PROMOTION_THREAT * promotion_threat_penalty
     )
 
     return score
@@ -267,10 +268,10 @@ class DefensiveAgent:
     ahead and preventing enemy promotion. It should penalize exposed kings, undefended pieces, doubled
     or isolated pawns, and enemy attackers near the king.
 
-    Moves are chosen using the minimax + alpha-beta pruning(engin.search) to a configurable depth.
+    Moves are chosen using the minimax + alpha-beta pruning (engine.search) to a configurable depth.
     """
 
-    name = "Defending"
+    name = "Defensive"
 
     def __init__(self, depth=2):
         self.depth = depth
@@ -284,7 +285,7 @@ if __name__ == "__main__":
 
     white = DefensiveAgent()
     black = RandomAgent()
-    board = chess.board()
+    board = chess.Board()
 
     while not board.is_game_over():
         agent = white if board.turn == chess.WHITE else black
