@@ -78,7 +78,7 @@ def protected_pieces_score(board, color):
         if piece.color == color and piece.piece_type not in (chess.PAWN, chess.KING):
             defenders =  len(board.attackers(color, sq))
             if defenders > 0:
-                score += 1 * min(defenders - 1, 2)
+                score += 1 * min(defenders, 2)   # 1 per defender, max 2
     
     return score
 
@@ -179,7 +179,7 @@ def enemy_promotion_threat_penalty(board, enemy):
     for sq, piece in board.piece_map().items():
         if piece.color == enemy and piece.piece_type == chess.PAWN:
             rank = chess.square_rank(sq)
-            advancement = (7-rank) if enemy == chess.WHITE else rank
+            advancement = rank if enemy == chess.WHITE else (7 - rank)   # ranks moved toward promotion
             if advancement >= 5:
                 penalty += (advancement-4) * 2
 
@@ -231,7 +231,7 @@ def side_score(board, color):
     exposed_pieces = expose_piece_penalty(board, color)
     pawn_structure = pawn_structure_score(board, color)
     opponent_mobility = opponent_mobility_penalty(board, color)
-    promotion_threat_penalty = enemy_promotion_threat_penalty(board, color)
+    promotion_threat_penalty = enemy_promotion_threat_penalty(board, not color)
 
     score = (
         mat_diff
