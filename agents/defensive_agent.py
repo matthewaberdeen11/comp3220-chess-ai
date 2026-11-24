@@ -216,8 +216,9 @@ def trade_when_ahead_bonus(board, mat_diff):
 
 
     max_starting_non_king =  2*(8 * 100 + 2 * 320 + 2 * 330 + 2 * 500 + 900)
-    exchanged_ratio = max(0, (max_starting_non_king) - total_non_king)
-    return exchanged_ratio * min(mat_diff * 1, 150)
+    # Fraction of the starting material already traded off: 0 at the start, near 1 with only kings left
+    exchanged_ratio = max(0, max_starting_non_king - total_non_king) / max_starting_non_king
+    return exchanged_ratio * min(mat_diff, 150)
 
 
 def side_score(board, color):
