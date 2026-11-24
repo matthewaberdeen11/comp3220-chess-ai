@@ -103,7 +103,7 @@ def pawn_structure_score(board, color):
             if not has_neighbour:
                 score -= 1 * count_in_file
 
-    score += (1 for sq in pawn_squares if board.attackers(color, sq))
+    score += sum(1 for sq in pawn_squares if board.attackers(color, sq))
     return score
 
 def expose_piece_penalty(board, color):
