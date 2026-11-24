@@ -223,7 +223,7 @@ def trade_when_ahead_bonus(board, mat_diff):
 def side_score(board, color):
     """Calculates defensive evaluation for color's perspective"""
     mat_diff = material_diff(board, color)
-    trading_bonus = trade_when_ahead_bonus(board, color)
+    trading_bonus = trade_when_ahead_bonus(board, mat_diff)
     king_safety = king_safety_score(board, color)
     enemy_king_pressure = enemy_king_pressure_penalty(board, color)
     protected_pieces = protected_pieces_score(board, color)
