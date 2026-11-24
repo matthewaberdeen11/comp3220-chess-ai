@@ -1,0 +1,16 @@
+[Event "Chess AI Match Series"]
+[Site "Local Match Runner"]
+[Date "2026.11.24"]
+[Round "2"]
+[White "Attacking"]
+[Black "Defensive"]
+[Result "0-1"]
+[Termination "Checkmate"]
+
+1. e4 Nf6 2. Qf3 Nc6 3. Bc4 d5 4. exd5 Nd4 5. Qe3 Nxc2+ 6. Ke2 Nxe3 7. fxe3
+Bg4+ 8. Kf1 Qd7 9. Nc3 Qf5+ 10. Ke1 O-O-O 11. d4 Rd6 12. Bd2 h6 13. Bb5 Kb8 14.
+a3 a6 15. Bc4 Kc8 16. h4 Rb6 17. b4 Rd6 18. h5 Rg8 19. Rh4 b5 20. Bb3 Nxh5 21.
+Rh2 Ng3 22. Bc1 Qf1+ 23. Kd2 Qxg1 24. Nxb5 axb5 25. Kc3 Qxh2 26. Bd2 Qxg2 27.
+Be1 Ne4+ 28. Kd3 Be2+ 29. Kc2 Bc4+ 30. Bf2 Qxf2+ 31. Kb1 Bxb3 32. Ra2 Qxa2+ 33.
+Kc1 Qc2# 0-1
+

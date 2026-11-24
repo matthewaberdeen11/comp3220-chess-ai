@@ -1,0 +1,45 @@
+Game #5: Defensive (White) vs Attacking (Black)
+Result: 1-0 (Checkmate)
+Total Plies: 81
+__________________________________________________
+1. e3         e6
+2. Qf3        Qh4
+3. g3         Qb4
+4. c3         Qa4
+5. b3         Qa5
+6. Bb2        Be7
+7. h4         Nh6
+8. a4         Qe5
+9. Be2        g6
+10. d4         Qa5
+11. Nd2        c6
+12. Qe4        d6
+13. b4         Qb6
+14. a5         Qc7
+15. Qc2        d5
+16. Rh3        Nd7
+17. h5         gxh5
+18. Rxh5       Ng8
+19. Nh3        Ngf6
+20. Rg5        h6
+21. Rg7        Kd8
+22. Rxf7       Bxb4
+23. cxb4       Qd6
+24. Ba3        Rg8
+25. Bf1        Rg4
+26. a6         bxa6
+27. O-O-O      Nb6
+28. Rxf6       Bb7
+29. Rxh6       c5
+30. bxc5       Qc7
+31. Rxe6       Nd7
+32. Be2        Rg8
+33. Nf4        Kc8
+34. c6         Bxc6
+35. Bxa6+      Kb8
+36. Rh1        Nf6
+37. Rxf6       Re8
+38. Rfh6       Qg7
+39. Rxc6       Rd8
+40. Qb3+       Qb7
+41. Qxb7#
