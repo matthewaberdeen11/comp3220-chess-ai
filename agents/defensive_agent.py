@@ -51,7 +51,8 @@ def king_safety_score(board, color):
     for df in KING_SHIELD_FILES:
         f = king_file + df
         if (0 <= f <= 7):
-            if 0 <= f <= 7:
+            # No shield square when the king is on the far edge (rank 8 for White, rank 1 for Black)
+            if 0 <= shield_rank <= 7:
                 sq = chess.square(f, shield_rank)
                 piece = board.piece_at(sq)
                 if piece and piece.piece_type == chess.PAWN and piece.color == color:
