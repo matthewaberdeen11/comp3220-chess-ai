@@ -4,13 +4,14 @@
 [Round "10"]
 [White "Attacking"]
 [Black "Defensive"]
-[Result "0-1"]
-[Termination "Checkmate"]
+[Result "1/2-1/2"]
+[Termination "Threefold Repetition"]
 
-1. e4 Nf6 2. Qf3 Nc6 3. Bc4 d5 4. exd5 Nd4 5. Qe3 Nxc2+ 6. Ke2 Nxe3 7. fxe3
-Bg4+ 8. Kf1 Qd7 9. Nc3 Qf5+ 10. Ke1 O-O-O 11. d4 Rd6 12. Bd2 h6 13. Bb5 Kb8 14.
-a3 a6 15. Bc4 Kc8 16. h4 Rb6 17. b4 Rd6 18. h5 Rg8 19. Rh4 b5 20. Bb3 Nxh5 21.
-Rh2 Ng3 22. Bc1 Qf1+ 23. Kd2 Qxg1 24. Nxb5 axb5 25. Kc3 Qxh2 26. Bd2 Qxg2 27.
-Be1 Ne4+ 28. Kd3 Be2+ 29. Kc2 Bc4+ 30. Bf2 Qxf2+ 31. Kb1 Bxb3 32. Ra2 Qxa2+ 33.
-Kc1 Qc2# 0-1
+1. e4 Nf6 2. Qf3 Nc6 3. Nc3 d6 4. Bc4 d5 5. Bd3 dxe4 6. Bxe4 Nxe4 7. Qxe4 Nd4
+8. d3 Nxc2+ 9. Kf1 Nxa1 10. Qa4+ c6 11. Nf3 Qxd3+ 12. Kg1 Qd6 13. Qe4 Be6 14.
+Bg5 f6 15. Be3 g6 16. Kf1 a6 17. Bb6 f5 18. Qh4 Qd3+ 19. Kg1 Qd7 20. Ne5 Qc8
+21. f3 f4 22. Qxf4 Bg7 23. Kf2 Nc2 24. Rd1 Bxe5 25. Qxe5 Rf8 26. Kg1 c5 27. Kh1
+Nb4 28. b3 Nxa2 29. Nxa2 Bxb3 30. Rd2 Bxa2 31. Rxa2 Qc6 32. Ba5 Rf7 33. Rd2 b6
+34. Qh8+ Rf8 35. Qe5 bxa5 36. Rd3 c4 37. Rd1 Rf7 38. Qh8+ Rf8 39. Qe5 Rf7 40.
+Qh8+ Rf8 1/2-1/2
 

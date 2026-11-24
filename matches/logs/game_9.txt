@@ -1,6 +1,6 @@
 Game #9: Defensive (White) vs Attacking (Black)
 Result: 1-0 (Checkmate)
-Total Plies: 81
+Total Plies: 101
 __________________________________________________
 1. e3         e6
 2. Qf3        Qh4
@@ -33,13 +33,23 @@ __________________________________________________
 29. Rxh6       c5
 30. bxc5       Qc7
 31. Rxe6       Nd7
-32. Be2        Rg8
-33. Nf4        Kc8
+32. Be2        Rg7
+33. Nf4        Rg5
 34. c6         Bxc6
-35. Bxa6+      Kb8
-36. Rh1        Nf6
-37. Rxf6       Re8
-38. Rfh6       Qg7
-39. Rxc6       Rd8
-40. Qb3+       Qb7
-41. Qxb7#
+35. Be7+       Kc8
+36. Bxg5       Rb8
+37. Bxa6+      Rb7
+38. Bxb7+      Qxb7
+39. Re8+       Kc7
+40. Nxd5+      Kd6
+41. Nf4        Nc5
+42. Qxc5+      Kc7
+43. Qe5+       Kb6
+44. Re6        Qh7
+45. Qc5+       Ka6
+46. Qxc6+      Ka5
+47. Re5+       Kb4
+48. Be7+       Qxe7
+49. Rxe7       Ka3
+50. Rxa7+      Kb4
+51. Nd5#

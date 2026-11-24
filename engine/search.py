@@ -7,6 +7,7 @@ Convention: scores are from White's point of view (positive favours White).
 White is the maximising player, Black is the minimising player.
 """
 import math
+import random
 
 import chess
 
@@ -74,7 +75,13 @@ def best_move(board, depth, evaluate):
     chosen = None
     alpha, beta = -math.inf, math.inf
 
-    for move in board.legal_moves:
+    # Shuffle the root moves so that when several moves score the same, a
+    # different one may be picked each time. Without this the agents are fully
+    # deterministic and every game between them is identical.
+    moves = list(board.legal_moves)
+    random.shuffle(moves)
+
+    for move in moves:
         board.push(move)
         score = alphabeta(board, depth - 1, evaluate, alpha, beta, not maximizing)
         board.pop()

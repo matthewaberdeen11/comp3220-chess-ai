@@ -167,6 +167,9 @@ class MatchRunner:
 if __name__ == "__main__":
     from agents.defensive_agent import DefensiveAgent
     from agents.attacking_agent import AttackingAgent
+    import random
+
+    random.seed(2026)   # fixed seed: the series is varied but repeatable
 
     defender = DefensiveAgent(depth=2)
     attacker = AttackingAgent(depth=2)
