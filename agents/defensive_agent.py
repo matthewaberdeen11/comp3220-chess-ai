@@ -113,7 +113,7 @@ def expose_piece_penalty(board, color):
 
     for sq, piece in board.piece_map().items():
         if piece.color == color and piece.piece_type != chess.KING:
-            attackers = list(board.atteackers(enemy, sq))
+            attackers = list(board.attackers(enemy, sq))
             if not attackers:
                 continue
 
