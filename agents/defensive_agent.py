@@ -167,11 +167,11 @@ def enemy_king_pressure_penalty(board, color):
                 if attackers:
                     penalty += 1 * len(attackers)
 
-            if board.is_check() and board.turn == color:
-                penalty += 3
+    # Checked once, after all 8 squares around the king have been counted
+    if board.is_check() and board.turn == color:
+        penalty += 3
 
-
-            return penalty
+    return penalty
 
 def enemy_promotion_threat_penalty(board, enemy):
     """Penalize advanced enemy pawns close to promotion."""
