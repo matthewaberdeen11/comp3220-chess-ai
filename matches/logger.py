@@ -2,7 +2,6 @@ import chess
 import chess.pgn
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from typing import Optional
 from pathlib import Path
 
 
@@ -53,20 +52,20 @@ class MatchLogger:
         self.records.append(record)
         return record
     
-    def to_pgn_game(self, record, initial_board):
+    def to_pgn_game(self, record, initial_board=None):
         game = chess.pgn.Game()
         game.headers["Event"] = "Chess AI Match Series"
         game.headers["Site"] = "Local Match Runner"
-        game.headers["Date"] = datetime.now(timezone.utc).strftime("%Y.%m.&d")
+        game.headers["Date"] = datetime.now(timezone.utc).strftime("%Y.%m.%d")
         game.headers["Round"] = str(record.game_id)
         game.headers["White"] = record.white_name
         game.headers["Black"] = record.black_name
         game.headers["Result"] = record.result
-        game.heders["Termination"] = record.termination
+        game.headers["Termination"] = record.termination
 
         board = initial_board.copy() if initial_board else chess.Board()
         node = game
-        for uci in record.moves.uci:
+        for uci in record.moves_uci:
             move = chess.Move.from_uci(uci)
             if move in board.legal_moves:
                 node = node.add_variation(move)
@@ -74,44 +73,40 @@ class MatchLogger:
 
         return game
 
-def save_game_pgn(self, record, filename):
-    game = self.to_pgn_game(record)
-    target = self.output_dir / filename
-    exporter = chess.pgn.FileExporter(target,open("w", encoding="utf-8"))
-    game.accept(exporter)
+    def save_game_pgn(self, record, filename):
+        game = self.to_pgn_game(record)
+        target = self.output_dir / filename
+        with target.open("w", encoding="utf-8") as fh:
+            game.accept(chess.pgn.FileExporter(fh))
 
-    return target
+        return target
 
-def save_all_pgn(self, filename):
-    target = self.output_dir / filename
-    with target.open("w", encoding="utf-8") as fh:
-        for record in self.records:
-            game = self.to_pgn_game(record)
-            print(game, file=fh, end="\n\n")
+    def save_all_pgn(self, filename):
+        target = self.output_dir / filename
+        with target.open("w", encoding="utf-8") as fh:
+            for record in self.records:
+                game = self.to_pgn_game(record)
+                print(game, file=fh, end="\n\n")
 
-    return target
+        return target
 
+    def save_game_text(self, record, filename):
+        target = self.output_dir / filename
+        lines = [
+            f"Game #{record.game_id}: {record.white_name} (White) vs {record.black_name} (Black)",
+            f"Result: {record.result} ({record.termination})",
+            f"Total Plies: {record.ply_count}", "_" * 50
+        ]
 
-def save_game_text(self, record, filename):
-    target = self.output_dir / filename
-    lines = [
-        f"Game #{record.game_id}: {record.white_name} (White) vs {record.black_name} (Black)",
-        f"Result: {record.result} ({record.termination})",
-        f"Total Plies: {record.ply_count}", "_" * 50
-    ]
+        for idx in range(0, len(record.moves_san), 2):
+            move_num = (idx // 2) + 1
+            white_move = record.moves_san[idx]
+            black_move = record.moves_san[idx + 1] if idx + 1 < len(record.moves_san) else ""
 
-    for idx in range(0, len(record.moves_san), 2):
-        move_num = (idx // 2) + 1
-        white_move = record.moves_san[idx]
-        black_move = record.moves_san[idx + 1] if idx + 1 < len(record.moves_san) else ""
+            if black_move:
+                lines.append(f'{move_num}. {white_move:<10} {black_move}')
+            else:
+                lines.append(f'{move_num}. {white_move}')
 
-        if black_move:
-            lines.append(f'{move_num}. {white_move:<10} {black_move}')
-        else:
-            lines.append(f'{move_num}.{white_move}')
-
-    target.write_text("\n".join(lines) + "\n", encoding = "utf-8")
-    return target
-
-
-
+        target.write_text("\n".join(lines) + "\n", encoding = "utf-8")
+        return target

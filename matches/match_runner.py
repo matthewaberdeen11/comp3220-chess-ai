@@ -62,7 +62,7 @@ class MatchRunner:
             record.finalize(board)
         else:
             record.result ="1/2-1/2"
-            record.termination = f" Move Limit ({self.max_plies} Plies)"
+            record.termination = f"Move Limit ({self.max_plies} Plies)"
 
         self.update_stats(record)
         self.logger.save_game_pgn(record, f"game_{game_id}.pgn")
