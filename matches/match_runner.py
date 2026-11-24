@@ -8,7 +8,7 @@ from matches.logger import GameRecord, MatchLogger
 class ChessAgent(Protocol):
     name:str
 
-    def select_move(self, board):
+    def choose_move(self, board):
         ...
 
 @dataclass
@@ -21,21 +21,17 @@ class AgentStats:
 
     @property
     def points(self):
-        return self.wins * 0.5 * self.draws
+        return self.wins + 0.5 * self.draws
 
 class MatchRunner:
 
-    def __init__(self, agent_a, agent_b, max_plies, log_dir, report_path):
-
-        agent_a: ChessAgent
-        agent_b: ChessAgent
-        max_plies: int = 200
-        log_dir: str | Path = "matches/logs"
-        report_path: str | Path = "docs/match_report.md"
+    def __init__(self, agent_a: ChessAgent, agent_b: ChessAgent, max_plies: int = 200,
+                 log_dir: str | Path = "matches/logs",
+                 report_path: str | Path = "docs/match_report.md"):
 
         self.agent_a = agent_a
         self.agent_b = agent_b
-        self.maxplies = max_plies
+        self.max_plies = max_plies
         self.logger = MatchLogger(output_dir = log_dir)
         self.report_path = Path(report_path)
         self.stats: dict[str, AgentStats] = {
@@ -49,14 +45,14 @@ class MatchRunner:
         record = self.logger.start_game(
             game_id = game_id,
             white_name = white_agent.name,
-            white_name = black_agent.name,
+            black_name = black_agent.name,
         )
 
         while not board.is_game_over(claim_draw=True) and record.ply_count < self.max_plies:
             active_agent = white_agent if board.turn == chess.WHITE else black_agent
-            move = active_agent.select_move(board)
+            move = active_agent.choose_move(board)
             if move not in board.legal_moves:
-                raise RuntimeError(f"Illegl move {move.uci()} attempted by {active_agent.name} on game {game_id}")
+                raise RuntimeError(f"Illegal move {move.uci()} attempted by {active_agent.name} on game {game_id}")
 
             board_before = board.copy(stack=False)
             record.record_move(board_before, move)
@@ -69,8 +65,8 @@ class MatchRunner:
             record.termination = f" Move Limit ({self.max_plies} Plies)"
 
         self.update_stats(record)
-        self.logger.save_game_pgn(record)
-        self.logger.save_game_text(record)
+        self.logger.save_game_pgn(record, f"game_{game_id}.pgn")
+        self.logger.save_game_text(record, f"game_{game_id}.txt")
 
         return record    
 
@@ -81,11 +77,11 @@ class MatchRunner:
         black_stats.games_played += 1
 
         if record.result == "1-0":
-            white_stats.win += 1
+            white_stats.wins += 1
             black_stats.losses += 1
         elif record.result == "0-1":
-            white_stats.win += 1
-            black_stats.losses += 1
+            black_stats.wins += 1
+            white_stats.losses += 1
         else:
             white_stats.draws += 1
             black_stats.draws += 1
@@ -116,7 +112,7 @@ class MatchRunner:
                 str(st.wins),
                 str(st.losses),
                 str(st.draws),
-                f"{st.points: .1f}"
+                f"{st.points:.1f}"
             ])
 
         col_widths = [
@@ -124,7 +120,7 @@ class MatchRunner:
         ]
 
         def fmt_row(items):
-            return "| " + " |".join(items[i].ljust(col_widths[i]) for i in range(len(items))) + " |"
+            return "| " + " | ".join(items[i].ljust(col_widths[i]) for i in range(len(items))) + " |"
 
         sep = "| " + " | ".join("-" * w for w in col_widths) + " |"
         return "\n".join([fmt_row(headers), sep, *(fmt_row(r) for r in rows)])
@@ -143,7 +139,7 @@ class MatchRunner:
 
         for r in records:
             game_lines.append(
-                f"| {r.game_id} | {r.white_name} | {r.black_name} | {r.result} | {r.ply_count} | {r.termination}"
+                f"| {r.game_id} | {r.white_name} | {r.black_name} | {r.result} | {r.ply_count} | {r.termination} |"
             )
         
         report_content = "\n".join([
@@ -158,7 +154,7 @@ class MatchRunner:
             f"- **Total Games Played:** {total_games}",
             f"- **Decisive Games:** {decisive_games}",
             f"- **Draw Games:** {draw_games}",
-            f"- **Average Game Length:** {avg_plies: .1f} plies",
+            f"- **Average Game Length:** {avg_plies:.1f} plies",
             "",
             "## Game-by-Game Log",
             "",
@@ -172,8 +168,8 @@ if __name__ == "__main__":
     from agents.defensive_agent import DefensiveAgent
     from agents.attacking_agent import AttackingAgent
 
-    defender = DefensiveAgent(name="DefensiveAgent", depth=2, seed=7)
-    attacker = AttackingAgent(name='AttackingAgent', depth=2, seed=7)
+    defender = DefensiveAgent(depth=2)
+    attacker = AttackingAgent(depth=2)
     runner = MatchRunner(agent_a=defender, agent_b=attacker, max_plies=120)
-    runner.run_series(num_games = 100)
+    runner.run_series(num_games=10)   # alternates colours each game
     print(runner.format_results_table())    
