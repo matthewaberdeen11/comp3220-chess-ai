@@ -219,7 +219,7 @@ def trade_when_ahead_bonus(board, mat_diff):
     return exchanged_ratio * min(mat_diff * 1, 150)
 
 
-def evaluate(board, color):
+def side_score(board, color):
     """Calculates defensive evaluation for color's perspective"""
     mat_diff = material_diff(board, color)
     trading_bonus = trade_when_ahead_bonus(board, color)
@@ -244,6 +244,15 @@ def evaluate(board, color):
     )
 
     return score
+
+
+def evaluate(board):
+    """Score from White's point of view: positive favours White.
+
+    engine.search.best_move calls evaluate(board) with only the board, so we
+    score each side from its own perspective and subtract Black from White.
+    """
+    return side_score(board, chess.WHITE) - side_score(board, chess.BLACK)
 
 
 class DefensiveAgent:
