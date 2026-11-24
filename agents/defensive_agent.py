@@ -226,7 +226,7 @@ def side_score(board, color):
     king_safety = king_safety_score(board, color)
     enemy_king_pressure = enemy_king_pressure_penalty(board, color)
     protected_pieces = protected_pieces_score(board, color)
-    expose_piece_penalty = expose_piece_penalty(board, color)
+    exposed_pieces = expose_piece_penalty(board, color)
     pawn_structure = pawn_structure_score(board, color)
     opponent_mobility = opponent_mobility_penalty(board, color)
     promotion_threat_penalty = enemy_promotion_threat_penalty(board, color)
@@ -237,7 +237,7 @@ def side_score(board, color):
         + 25 * king_safety
         + 15 * protected_pieces
         + 15 * pawn_structure
-        - 25 * expose_piece_penalty
+        - 25 * exposed_pieces
         - 15 * opponent_mobility
         - 20 * enemy_king_pressure
         - 20 * promotion_threat_penalty 
