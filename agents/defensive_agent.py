@@ -99,7 +99,7 @@ def pawn_structure_score(board, color):
             score -= 1 *(count_in_file - 1)
 
         if count_in_file > 0:
-            has_neighbour = (f > 0 and files.count(f -1) > 0) or (f < 0 and files.count(f +1) > 0)
+            has_neighbour = (f > 0 and files.count(f -1) > 0) or (f < 7 and files.count(f +1) > 0)
             if not has_neighbour:
                 score -= 1 * count_in_file
 
