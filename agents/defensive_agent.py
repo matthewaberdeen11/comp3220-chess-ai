@@ -172,10 +172,9 @@ def enemy_king_pressure_penalty(board, color):
 
             return penalty
 
-def enemy_promotion_threat_penalty(board, color):
+def enemy_promotion_threat_penalty(board, enemy):
     """Penalize advanced enemy pawns close to promotion."""
     penalty = 0
-    enemy = not color
     for sq, piece in board.piece_map().items():
         if piece.color == enemy and piece.piece_type == chess.PAWN:
             rank = chess.square_rank(sq)
@@ -216,8 +215,8 @@ def trade_when_ahead_bonus(board, mat_diff):
 
 
     max_starting_non_king =  2*(8 * 100 + 2 * 320 + 2 * 330 + 2 * 500 + 900)
-    exchanged_ratio = max(0.0, (max_starting_non_king) - total_non_king)
-    return exchanged_ratio * min(mat_diff * 1, 150.0)
+    exchanged_ratio = max(0, (max_starting_non_king) - total_non_king)
+    return exchanged_ratio * min(mat_diff * 1, 150)
 
 
 def evaluate(board, color):
@@ -276,7 +275,7 @@ if __name__ == "__main__":
     black = RandomAgent()
     board = chess.board()
 
-    while not board.is_game_game_over():
+    while not board.is_game_over():
         agent = white if board.turn == chess.WHITE else black
         move = agent.choose_move(board)
         print(agent.name, move)
